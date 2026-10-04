@@ -33,7 +33,7 @@ button.primary{background:var(--accent);color:var(--accent-ink);border-color:var
 </style>
 </head>
 <body>
- 
+
 <fieldset>
   <legend>1. Select folder</legend>
   <div class="row">
@@ -42,7 +42,7 @@ button.primary{background:var(--accent);color:var(--accent-ink);border-color:var
     <button id="browse">Browse...</button>
   </div>
 </fieldset>
- 
+
 <fieldset>
   <legend>2. Search word in title</legend>
   <div class="row">
@@ -54,12 +54,12 @@ button.primary{background:var(--accent);color:var(--accent-ink);border-color:var
     <label><input type="checkbox" id="recursive"> Include subfolders</label>
   </div>
 </fieldset>
- 
+
 <fieldset id="results">
   <legend>Results</legend>
   <ul id="list" tabindex="0" aria-label="Matching PDFs"><li class="empty">No results yet.</li></ul>
 </fieldset>
- 
+
 <div class="bar">
   <span id="status">Ready.</span>
   <button id="open">Open PDF</button>
@@ -68,7 +68,7 @@ button.primary{background:var(--accent);color:var(--accent-ink);border-color:var
   <button id="clear">Clear</button>
 </div>
 <p class="note">Browsers can't reveal files in Explorer or read full disk paths, so "Show in Folder" is not available and "Copy relative path" gives <em>folder/sub/file.pdf</em>. Selecting several PDFs opens each in its own tab; allow pop-ups if only one opens.</p>
- 
+
 <script>
 (() => {
   const $ = id => document.getElementById(id);
@@ -79,9 +79,9 @@ button.primary{background:var(--accent);color:var(--accent-ink);border-color:var
   let selected = new Set();
   let anchor = -1;
   const hasFSA = 'showDirectoryPicker' in window;
- 
+
   const setStatus = t => el.status.textContent = t;
- 
+
   /* ---------- settings (localStorage) ---------- */
   const saveSettings = () => {
     try { localStorage.setItem('pdfTitleSearcher', JSON.stringify({word:el.word.value.trim(),cs:el.cs.checked,rec:el.rec.checked})); } catch(e){}
@@ -92,7 +92,7 @@ button.primary{background:var(--accent);color:var(--accent-ink);border-color:var
       el.word.value = c.word || ''; el.cs.checked = !!c.cs; el.rec.checked = !!c.rec;
     } catch(e){}
   };
- 
+
   /* ---------- remembered folder handle (IndexedDB) ---------- */
   const db = () => new Promise((res, rej) => {
     const r = indexedDB.open('pdfTitleSearcher', 1);
@@ -104,7 +104,7 @@ button.primary{background:var(--accent);color:var(--accent-ink);border-color:var
     tx.oncomplete = () => res(req.result); tx.onerror = () => rej(tx.error); }); };
   const saveHandle = h => kv('readwrite', s => s.put(h, 'dir')).catch(()=>{});
   const loadHandle = () => kv('readonly', s => s.get('dir')).catch(() => null);
- 
+
   /* ---------- folder choice ---------- */
   async function browse() {
     if (hasFSA) {
@@ -128,7 +128,7 @@ button.primary{background:var(--accent);color:var(--accent-ink);border-color:var
       inp.click();
     }
   }
- 
+
   async function restoreFolder() {
     if (!hasFSA) return;
     const h = await loadHandle();
@@ -151,7 +151,7 @@ button.primary{background:var(--accent);color:var(--accent-ink);border-color:var
       setStatus('Click "Reopen" to let the page read your last folder.');
     }
   }
- 
+
   /* ---------- scanning ---------- */
   async function scan(dir, prefix, recursive, out) {
     for await (const [name, h] of dir.entries()) {
@@ -162,7 +162,7 @@ button.primary{background:var(--accent);color:var(--accent-ink);border-color:var
       }
     }
   }
- 
+
   async function search() {
     const word = el.word.value.trim();
     if (!rootHandle && !fallbackFiles) { alert('Please select a folder first.'); return; }
@@ -170,7 +170,7 @@ button.primary{background:var(--accent);color:var(--accent-ink);border-color:var
     saveSettings();
     clearResults(true);
     setStatus('Searching...');
- 
+
     let pdfs = [];
     const base = el.folder.value + '/';
     if (rootHandle) {
@@ -182,7 +182,7 @@ button.primary{background:var(--accent);color:var(--accent-ink);border-color:var
         .filter(f => el.rec.checked || f.webkitRelativePath.split('/').length === 2)
         .map(f => ({name: f.name, rel: f.webkitRelativePath, getFile: async () => f}));
     }
- 
+
     const needle = el.cs.checked ? word : word.toLowerCase();
     results = pdfs
       .filter(p => (el.cs.checked ? p.name : p.name.toLowerCase()).includes(needle))
@@ -190,7 +190,7 @@ button.primary{background:var(--accent);color:var(--accent-ink);border-color:var
     render();
     setStatus("Found " + results.length + " PDF(s) matching '" + word + "'.");
   }
- 
+
   /* ---------- results list ---------- */
   function render() {
     el.list.innerHTML = '';
@@ -206,9 +206,9 @@ button.primary{background:var(--accent);color:var(--accent-ink);border-color:var
       el.list.appendChild(li);
     });
   }
- 
+
   const paint = () => [...el.list.children].forEach(li => li.classList.toggle('sel', selected.has(+li.dataset.i)));
- 
+
   el.list.addEventListener('click', e => {
     const li = e.target.closest('li[data-i]'); if (!li) return;
     const i = +li.dataset.i;
@@ -221,15 +221,15 @@ button.primary{background:var(--accent);color:var(--accent-ink);border-color:var
     paint();
   });
   el.list.addEventListener('dblclick', e => { if (e.target.closest('li[data-i]')) openSelected(); });
- 
+
   const chosen = () => [...selected].sort((a, b) => a - b).map(i => results[i]);
- 
+
   function clearResults(keepStatus) {
     results = []; selected = new Set(); anchor = -1;
     el.list.innerHTML = '<li class="empty">No results yet.</li>';
     if (!keepStatus) setStatus('Ready.');
   }
- 
+
   /* ---------- actions ---------- */
   function openSelected() {
     const items = chosen();
@@ -245,7 +245,7 @@ button.primary{background:var(--accent);color:var(--accent-ink);border-color:var
     });
     setStatus('Opened ' + items.length + ' PDF(s).');
   }
- 
+
   async function copy(text, msg) {
     try { await navigator.clipboard.writeText(text); setStatus(msg); }
     catch (e) {
@@ -254,25 +254,24 @@ button.primary{background:var(--accent);color:var(--accent-ink);border-color:var
     }
   }
   const needSel = () => { const c = chosen(); if (!c.length) alert('Please select a PDF first.'); return c; };
- 
+
   $('browse').onclick = browse;
   $('search').onclick = search;
   $('open').onclick = openSelected;
   $('clear').onclick = () => clearResults(false);
   $('copyPath').onclick = () => { const c = needSel(); if (c.length) copy(c.map(r => r.rel).join('\n'), 'Copied ' + c.length + ' path(s) to clipboard.'); };
   $('copyName').onclick = () => { const c = needSel(); if (c.length) copy(c.map(r => r.name).join('\n'), 'Copied ' + c.length + ' file name(s) to clipboard.'); };
- 
+
   el.word.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); search(); } });
   el.list.addEventListener('keydown', e => { if (e.key === 'Enter') openSelected(); });
   document.addEventListener('keydown', e => {
     if (e.ctrlKey && e.key.toLowerCase() === 'o') { e.preventDefault(); openSelected(); }
   });
   [el.cs, el.rec].forEach(c => c.addEventListener('change', saveSettings));
- 
+
   loadSettings();
   restoreFolder();
 })();
 </script>
 </body>
 </html>
- 
